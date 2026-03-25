@@ -1,0 +1,300 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { 
+  User, School, Save, History, LayoutDashboard, 
+  Loader2, CheckCircle2, AlertCircle, RefreshCw,
+  Search, GraduationCap, Award
+} from 'lucide-react';
+
+// MASUKKAN URL WEB APP GOOGLE SCRIPT ANDA DI SINI
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwYKlvjdzucrCWsZxjAfAd9HDJLbRF43_4QPVxtd3tqF7n1O5_NXWpAvXK8zPHBW37T/exec"; 
+
+const SKALA_NILAI = [50, 70, 75, 80, 85, 90, 95, 100];
+
+const ASPEK = [
+  { id: 'laporan', label: 'Laporan', desc: 'Sistematika & Penulisan' },
+  { id: 'materi', label: 'Materi', desc: 'Penguasaan Isi PKL' },
+  { id: 'presentasi', label: 'Presentasi', desc: 'Kemampuan Bicara' },
+  { id: 'tanyaJawab', label: 'Tanya Jawab', desc: 'Ketepatan Jawaban' },
+  { id: 'Sikap', label: 'Sikap', desc: 'Etika & Kesopanan' },
+];
+
+export default function App() {
+  const [dbSiswa, setDbSiswa] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState('input');
+  const [status, setStatus] = useState(null);
+  
+  const [form, setForm] = useState({
+    penguji: '', 
+    siswa: '',
+    nilai: { laporan: 0, materi: 0, presentasi: 0, tanyaJawab: 0, Sikap: 0 }
+  });
+
+  // Ambil Data dari Spreadsheet
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const resp = await fetch(WEB_APP_URL);
+      const data = await resp.json();
+      setDbSiswa(data);
+    } catch (err) {
+      console.error("Gagal ambil data", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (WEB_APP_URL) fetchData();
+  }, []);
+
+  // Filter List Penguji Unik
+  const listPenguji = useMemo(() => {
+    return [...new Set(dbSiswa.map(item => item.penguji))];
+  }, [dbSiswa]);
+
+  // Filter Siswa berdasarkan Penguji Terpilih
+  const listSiswaTersedia = useMemo(() => {
+    return dbSiswa.filter(s => s.penguji === form.penguji);
+  }, [form.penguji, dbSiswa]);
+
+  // Dapatkan detail siswa terpilih (termasuk kelasnya secara otomatis)
+  const detailSiswaTerpilih = useMemo(() => {
+    return listSiswaTersedia.find(s => s.nama === form.siswa) || null;
+  }, [form.siswa, listSiswaTersedia]);
+
+  const totalNilai = useMemo(() => {
+    const vals = Object.values(form.nilai);
+    const sum = vals.reduce((a, b) => a + b, 0);
+    return sum > 0 ? Math.round(sum / 5) : 0;
+  }, [form.nilai]);
+
+  const handleSave = async () => {
+    if (!detailSiswaTerpilih) return;
+
+    setSubmitting(true);
+    const payload = {
+      tanggal: new Date().toLocaleString('id-ID'),
+      penguji: form.penguji,
+      kelas: detailSiswaTerpilih.kelas, // Diambil otomatis dari database
+      siswa: form.siswa,
+      ...form.nilai,
+      total: totalNilai
+    };
+
+    try {
+      await fetch(WEB_APP_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: JSON.stringify(payload)
+      });
+      setStatus({ type: 'success', msg: 'Nilai Berhasil Disimpan!' });
+      
+      // Reset form siswa & nilai saja agar penguji tetap terpilih
+      setForm(prev => ({ 
+        ...prev, 
+        siswa: '', 
+        nilai: { laporan: 0, materi: 0, presentasi: 0, tanyaJawab: 0, Sikap: 0 } 
+      }));
+      setTimeout(() => setStatus(null), 3000);
+    } catch (err) {
+      setStatus({ type: 'error', msg: 'Koneksi Gagal' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) return (
+    <div className="h-screen flex flex-col items-center justify-center bg-emerald-900 text-white p-10 text-center">
+      <Loader2 className="animate-spin mb-4" size={48} />
+      <h2 className="font-black text-xl tracking-tighter uppercase italic">SMK IPTEK</h2>
+      <p className="text-xs opacity-60 mt-2 font-medium">Sinkronisasi Database Peserta Sidang...</p>
+    </div>
+  );
+
+  return (
+    <div className="max-w-md mx-auto min-h-screen bg-slate-50 flex flex-col font-sans select-none overflow-hidden">
+      
+      {/* HEADER */}
+      <header className="bg-emerald-800 p-6 pt-12 text-white rounded-b-[3.5rem] shadow-2xl border-b-4 border-emerald-900/20 relative">
+        <div className="flex justify-between items-center relative z-10">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-inner">
+              <GraduationCap size={28} />
+            </div>
+            <div>
+              <h1 className="text-xl font-black leading-none uppercase italic tracking-tighter">SMK IPTEK</h1>
+              <p className="text-[10px] font-bold opacity-70 tracking-[0.2em] uppercase mt-1">Penilaian Sidang PKL</p>
+            </div>
+          </div>
+          <button onClick={fetchData} className="p-2.5 bg-white/10 rounded-full active:rotate-180 transition-all shadow-lg border border-white/10">
+            <RefreshCw size={20} />
+          </button>
+        </div>
+      </header>
+
+      {/* MAIN CONTENT */}
+      <main className="flex-1 px-4 py-8 overflow-y-auto">
+        {activeTab === 'input' ? (
+          <div className="space-y-8 pb-48">
+            
+            {/* Identity Card */}
+            <div className="bg-white p-6 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 space-y-6">
+              
+              {/* Dropdown Penguji */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 flex items-center gap-2">
+                  <User size={12} className="text-emerald-600" /> Identitas Penguji
+                </label>
+                <div className="relative">
+                  <select 
+                    className="w-full p-4 bg-slate-50 border-2 border-transparent rounded-2xl text-sm font-bold text-slate-700 focus:border-emerald-500 focus:bg-white transition-all appearance-none"
+                    value={form.penguji}
+                    onChange={(e) => setForm({...form, penguji: e.target.value, siswa: ''})}
+                  >
+                    <option value="">-- Cari Nama Anda --</option>
+                    {listPenguji.map(p => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                    <Search size={18} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Dropdown Siswa (Hanya tampil jika penguji sudah dipilih) */}
+              {form.penguji && (
+                <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-500">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 flex items-center gap-2">
+                    <Award size={12} className="text-emerald-600" /> Pilih Peserta Sidang
+                  </label>
+                  <select 
+                    className="w-full p-4 bg-emerald-50/50 border-2 border-emerald-100 rounded-2xl text-sm font-black text-emerald-900 focus:border-emerald-600 appearance-none transition-all"
+                    value={form.siswa}
+                    onChange={(e) => setForm({...form, siswa: e.target.value})}
+                  >
+                    <option value="">-- Klik untuk Pilih Peserta --</option>
+                    {listSiswaTersedia.map(s => <option key={s.nama} value={s.nama}>{s.nama}</option>)}
+                  </select>
+
+                  {/* Info Kelas Otomatis */}
+                  {detailSiswaTerpilih && (
+                    <div className="mt-3 px-4 py-2 bg-emerald-600 rounded-xl inline-flex items-center gap-2 shadow-lg shadow-emerald-100 animate-in zoom-in duration-300">
+                      <School size={12} className="text-emerald-200" />
+                      <span className="text-[10px] font-black text-white uppercase tracking-wider">
+                        Kelas: {detailSiswaTerpilih.kelas}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Form Penilaian */}
+            {form.siswa && (
+              <div className="space-y-6 animate-in fade-in duration-700">
+                <div className="flex items-center justify-between px-2">
+                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Parameter Penilaian</h3>
+                  <div className="h-px flex-1 mx-4 bg-slate-200"></div>
+                </div>
+
+                {ASPEK.map((aspek) => (
+                  <div key={aspek.id} className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-md shadow-slate-100/50 hover:shadow-lg transition-shadow">
+                    <div className="mb-5 flex justify-between items-center">
+                      <div>
+                        <span className="text-sm font-black text-slate-800 uppercase tracking-tight">{aspek.label}</span>
+                        <p className="text-[10px] text-slate-400 font-bold italic leading-none mt-1">{aspek.desc}</p>
+                      </div>
+                      {form.nilai[aspek.id] > 0 && (
+                        <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white text-xs font-black shadow-lg shadow-emerald-200 animate-in zoom-in">
+                          {form.nilai[aspek.id]}
+                        </div>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-4 gap-2">
+                      {SKALA_NILAI.map(n => (
+                        <button
+                          key={n}
+                          onClick={() => setForm({ ...form, nilai: { ...form.nilai, [aspek.id]: n } })}
+                          className={`py-3.5 rounded-2xl text-[11px] font-black transition-all active:scale-90 ${
+                            form.nilai[aspek.id] === n 
+                            ? 'bg-emerald-600 text-white shadow-xl shadow-emerald-200 ring-2 ring-emerald-500 ring-offset-2' 
+                            : 'bg-slate-50 text-slate-400 border border-slate-100'
+                          }`}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="h-96 flex flex-col items-center justify-center text-slate-300">
+             <History size={80} strokeWidth={1} className="opacity-10 mb-4" />
+             <p className="text-xs font-black uppercase tracking-[0.3em]">Cek Google Spreadsheet</p>
+             <p className="text-[10px] mt-1 font-bold italic">Data rekap terupdate otomatis</p>
+          </div>
+        )}
+      </main>
+
+      {/* FLOAT ACTION BUTTON (Simpan) */}
+      {activeTab === 'input' && form.siswa && (
+        <div className="fixed bottom-24 left-4 right-4 bg-white/80 backdrop-blur-xl p-5 rounded-[3rem] shadow-[0_-20px_40px_rgba(0,0,0,0.05)] border border-white flex items-center gap-5 z-40 animate-in slide-in-from-bottom-10">
+          <div className="bg-slate-900 px-6 py-4 rounded-[1.8rem] flex flex-col items-center justify-center min-w-[95px] shadow-2xl">
+            <p className="text-[8px] font-black text-slate-500 uppercase tracking-tighter mb-1">Rata-Rata</p>
+            <p className="text-3xl font-black text-white leading-none">{totalNilai || '--'}</p>
+          </div>
+          <button 
+            disabled={submitting || totalNilai === 0}
+            onClick={handleSave}
+            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-5 rounded-[1.8rem] font-black text-sm flex items-center justify-center gap-3 active:scale-95 disabled:opacity-30 transition-all shadow-2xl shadow-emerald-200 uppercase tracking-widest"
+          >
+            {submitting ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
+            Simpan Nilai
+          </button>
+        </div>
+      )}
+
+      {/* FEEDBACK TOAST */}
+      {status && (
+        <div className={`fixed top-8 left-4 right-4 p-5 rounded-3xl flex items-center gap-4 shadow-2xl z-50 animate-in slide-in-from-top-10 ${
+          status.type === 'success' ? 'bg-emerald-600 shadow-emerald-900/40' : 'bg-red-600 shadow-red-900/40'
+        } text-white`}>
+          <div className="bg-white/20 p-2 rounded-xl">
+            {status.type === 'success' ? <CheckCircle2 size={24} /> : <AlertCircle size={24} />}
+          </div>
+          <span className="text-xs font-black uppercase tracking-tight leading-tight">{status.msg}</span>
+        </div>
+      )}
+
+      {/* BOTTOM NAVIGATION */}
+      <nav className="bg-white/90 backdrop-blur-md border-t border-slate-100 h-24 flex items-center justify-around px-10 pb-6 relative z-40">
+        <button 
+          onClick={() => setActiveTab('input')} 
+          className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'input' ? 'text-emerald-700 scale-110' : 'text-slate-300'}`}
+        >
+          <div className={`p-2 rounded-xl transition-colors ${activeTab === 'input' ? 'bg-emerald-50' : ''}`}>
+            <LayoutDashboard size={22} strokeWidth={activeTab === 'input' ? 3 : 2} />
+          </div>
+          <span className="text-[10px] font-black uppercase tracking-tighter">Input</span>
+        </button>
+        
+        <div className="w-px h-8 bg-slate-100"></div>
+
+        <button 
+          onClick={() => setActiveTab('history')} 
+          className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'history' ? 'text-emerald-700 scale-110' : 'text-slate-300'}`}
+        >
+          <div className={`p-2 rounded-xl transition-colors ${activeTab === 'history' ? 'bg-emerald-50' : ''}`}>
+            <History size={22} strokeWidth={activeTab === 'history' ? 3 : 2} />
+          </div>
+          <span className="text-[10px] font-black uppercase tracking-tighter">Rekap</span>
+        </button>
+      </nav>
+    </div>
+  );
+}
+
