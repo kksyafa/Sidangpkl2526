@@ -3,284 +3,302 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Penilaian Sidang PKL SMK IPTEK Tangsel</title>
+    <title>Penilaian Sidang PKL IPTEK Tangsel</title>
+    <!-- Tailwind CSS untuk UI Mobile Friendly -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- SweetAlert2 untuk Notifikasi Pop-up -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .custom-scroll::-webkit-scrollbar { display: none; }
-        .spin-slow { animation: spin 2s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(-360deg); } }
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .app-container { max-width: 480px; margin: 0 auto; background-color: #ffffff; min-height: 100vh; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); padding-bottom: 2rem; }
+        /* Hilangkan scrollbar bawaan */
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        .radio-btn-label:has(input:checked) { background-color: #4f46e5; color: white; border-color: #4f46e5; font-weight: bold; }
+        .radio-btn-label { transition: all 0.2s ease-in-out; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900">
-    <div id="root"></div>
+<body class="text-gray-800 antialiased">
 
-    <script type="text/babel">
-        const { useState, useEffect, useMemo } = React;
+<div class="app-container relative">
+    <!-- Header Aplikasi -->
+    <header class="bg-indigo-600 text-white p-5 rounded-b-3xl shadow-md sticky top-0 z-20">
+        <h1 class="text-xl font-bold tracking-tight">Sidang PKL '25/26</h1>
+        <p class="text-sm text-indigo-200 mt-1">SMK IPTEK TANGSEL</p>
+    </header>
 
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxKLP3DnYyR-MNx8Fbpr2ATbXylijQfsgaqDUG5I6lOBLfbgmsK-dDVrNjtmfZkwqOL/exec"; 
-
-        const SKALA_NILAI = [50, 70, 75, 80, 85, 90, 95, 100];
-        const ASPEK = [
-            { id: 'laporan', label: 'Laporan', desc: 'Sistematika & Penulisan' },
-            { id: 'materi', label: 'Materi', desc: 'Penguasaan Isi PKL' },
-            { id: 'presentasi', label: 'Presentasi', desc: 'Kemampuan Bicara' },
-            { id: 'tanyaJawab', label: 'Tanya Jawab', desc: 'Ketepatan Jawaban' },
-            { id: 'Sikap', label: 'Sikap', desc: 'Etika & Kesopanan' },
-        ];
-
-        // Icons
-        const IconUser = ({ size=24, className="" }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
-        const IconSchool = ({ size=24, className="" }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14 22v-4a2 2 0 1 0-4 0v4"/><path d="m18 10 4 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8l4-2"/><path d="M18 5v17"/><path d="m4 6 8-4 8 4"/><path d="M6 5v17"/><circle cx="12" cy="9" r="2"/></svg>;
-        const IconGraduation = ({ size=24, className="" }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>;
-        const IconAward = ({ size=24, className="" }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>;
-        const IconRefresh = ({ size=24, className="" }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>;
-        const IconHistory = ({ size=24, className="" }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>;
-        const IconDashboard = ({ size=24, className="" }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>;
-        const IconCheck = ({ size=24, className="" }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>;
-        const IconAlert = ({ size=24, className="" }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>;
-        const IconSpinner = ({ size=24, className="" }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`spin-slow ${className}`}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>;
-
-        function App() {
-            const [dbSiswa, setDbSiswa] = useState([]);
-            const [loading, setLoading] = useState(true);
-            const [error, setError] = useState(null);
-            const [submitting, setSubmitting] = useState(false);
-            const [activeTab, setActiveTab] = useState('input');
-            const [status, setStatus] = useState(null);
+    <main class="p-5">
+        <form id="formPenilaian" class="space-y-6">
             
-            const [form, setForm] = useState({
-                penguji: '', 
-                siswa: '',
-                nilai: { laporan: 0, materi: 0, presentasi: 0, tanyaJawab: 0, Sikap: 0 }
+            <!-- SECTION: DATA PESERTA -->
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+                <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2">Data Peserta Ujian</h2>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Penguji</label>
+                    <select id="penguji" class="w-full border border-gray-300 rounded-xl p-3 bg-gray-50 focus:ring-2 focus:ring-indigo-500 outline-none text-sm appearance-none" required>
+                        <option value="" disabled selected>Memuat data penguji...</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Siswa</label>
+                    <select id="siswa" class="w-full border border-gray-300 rounded-xl p-3 bg-gray-50 focus:ring-2 focus:ring-indigo-500 outline-none text-sm appearance-none disabled:bg-gray-200 disabled:text-gray-400" disabled required>
+                        <option value="" disabled selected>-- Pilih Siswa --</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Kelas</label>
+                    <input type="text" id="kelas" class="w-full border border-gray-300 rounded-xl p-3 bg-gray-100 text-gray-600 text-sm font-medium outline-none cursor-not-allowed" readonly placeholder="Otomatis terisi dari data siswa">
+                </div>
+            </div>
+
+            <!-- SECTION: PENILAIAN -->
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-6">
+                <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2">Aspek Penilaian</h2>
+                <div id="aspekContainer" class="space-y-6"></div>
+            </div>
+
+            <!-- SECTION: HASIL -->
+            <div class="bg-indigo-50 rounded-2xl border border-indigo-100 p-6 text-center shadow-inner">
+                <p class="text-sm text-indigo-800 font-bold tracking-widest mb-1">TOTAL NILAI (RATA-RATA)</p>
+                <div id="totalNilai" class="text-6xl font-black text-indigo-600">0</div>
+            </div>
+
+            <button type="submit" id="btnSubmit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg transition-transform active:scale-95 flex justify-center items-center gap-2 text-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                Simpan Penilaian
+            </button>
+        </form>
+    </main>
+</div>
+
+<script>
+    // 1. URL API SHEETDB (Ganti dengan URL API SheetDB Anda nanti)
+    // Cara buat: Login ke sheetdb.io -> Create API -> Masukkan Link Spreadsheet Anda -> Copy API URL nya kesini
+    const API_URL = "https:/bsheetdb.io/api/v1/7sbk4195aqneo"; 
+
+    // Konfigurasi Aspek Penilaian sesuai permintaan
+    const aspekPenilaian = [
+        { id: 'Laporan', title: 'Penyusunan Laporan' },
+        { id: 'Materi', title: 'Pemahaman Materi', desc: 'Penguasaan isi & implementasi' },
+        { id: 'Presentasi', title: 'Presentasi', desc: 'Kepercayaan diri, intonasi, kontak mata' },
+        { id: 'TanyaJawab', title: 'Tanya Jawab', desc: 'Ketepatan jawaban & argumentasi' },
+        { id: 'Sikap', title: 'Sikap dan Etika', desc: 'Kesopanan & profesionalisme' }
+    ];
+    const pilihanNilai = [50, 70, 75, 80, 85, 90, 95, 100];
+    let dataMaster = [];
+
+    // 2. Render UI Penilaian
+    const aspekContainer = document.getElementById('aspekContainer');
+    aspekPenilaian.forEach(aspek => {
+        let html = `
+            <div>
+                <label class="block text-sm font-bold text-gray-800 mb-1">${aspek.title}</label>
+                ${aspek.desc ? `<p class="text-xs text-gray-500 mb-3">${aspek.desc}</p>` : ''}
+                <div class="grid grid-cols-4 gap-2">
+                    ${pilihanNilai.map(nilai => `
+                        <label class="radio-btn-label cursor-pointer relative rounded-xl border border-gray-200 py-3 text-center text-sm font-semibold text-gray-600 bg-white hover:bg-indigo-50 shadow-sm flex items-center justify-center">
+                            <input type="radio" name="${aspek.id}" value="${nilai}" class="sr-only" required onchange="hitungTotal()">
+                            ${nilai}
+                        </label>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        aspekContainer.insertAdjacentHTML('beforeend', html);
+    });
+
+    // 3. Fungsi Membaca CSV dengan perbaikan duplikat Penguji
+    function parseCSVData(csvText) {
+        const rows = [];
+        let inQuotes = false;
+        let val = '';
+        let row = [];
+        
+        // Memecah CSV dengan mengabaikan koma di dalam tanda kutip
+        for (let i = 0; i < csvText.length; i++) {
+            let char = csvText[i];
+            if (char === '"') inQuotes = !inQuotes;
+            else if (char === ',' && !inQuotes) { row.push(val.trim()); val = ''; }
+            else if (char === '\n' && !inQuotes) { row.push(val.trim()); rows.push(row); row = []; val = ''; }
+            else val += char;
+        }
+        row.push(val.trim());
+        rows.push(row);
+
+        const formattedData = [];
+        let currentPenguji = "";
+
+        // Mulai dari baris 1 (mengabaikan header di baris 0)
+        for (let i = 1; i < rows.length; i++) {
+            if (rows[i].length < 3) continue; // Skip jika baris tidak lengkap
+
+            // Bersihkan tanda kutip berlebih
+            let penguji = rows[i][0].replace(/^"|"$/g, '').trim();
+            let kelas = rows[i][1].replace(/^"|"$/g, '').trim();
+            let siswa = rows[i][2].replace(/^"|"$/g, '').trim();
+
+            // LOGIKA UTAMA: Jika kolom penguji kosong, gunakan nama penguji dari baris sebelumnya
+            if (penguji !== "") {
+                currentPenguji = penguji;
+            } else {
+                penguji = currentPenguji;
+            }
+
+            if (siswa !== "" && penguji !== "") {
+                formattedData.push({ penguji, kelas, siswa });
+            }
+        }
+        return formattedData;
+    }
+
+    // 4. Memuat Data dari DataMaster.csv
+    async function initAplikasi() {
+        try {
+            // Membaca file DataMaster.csv yang diletakkan di repo Github yang sama
+            const response = await fetch('./DataMaster.csv');
+            if(!response.ok) throw new Error("File tidak ditemukan");
+            const csvText = await response.text();
+            
+            dataMaster = parseCSVData(csvText);
+            
+            // Masukkan ke Dropdown Penguji (Hapus Duplikat)
+            const selectPenguji = document.getElementById('penguji');
+            selectPenguji.innerHTML = '<option value="" disabled selected>-- Pilih Penguji --</option>';
+            
+            const daftarPengujiUnik = [...new Set(dataMaster.map(item => item.penguji))].sort();
+            
+            daftarPengujiUnik.forEach(nama => {
+                let opt = document.createElement('option');
+                opt.value = nama;
+                opt.textContent = nama;
+                selectPenguji.appendChild(opt);
             });
-
-            const cleanString = (str) => {
-                if (!str) return "";
-                return String(str).replace(/^["']|["']$/g, '').trim();
-            };
-
-            const fetchData = async () => {
-                setLoading(true);
-                setError(null);
-                try {
-                    const resp = await fetch(WEB_APP_URL);
-                    if (!resp.ok) throw new Error("Gagal mengambil data dari Google Script.");
-                    const rawData = await resp.json();
-                    
-                    if (!Array.isArray(rawData) || rawData.length === 0) {
-                        throw new Error("Data kosong atau format tidak sesuai.");
-                    }
-
-                    let lastKnownPenguji = "";
-                    let lastKnownKelas = "";
-
-                    const processed = rawData.map(row => {
-                        // Handle case-insensitivity untuk header (Penguji vs penguji)
-                        const pRaw = row.Penguji || row.penguji || "";
-                        const kRaw = row.Kelas || row.kelas || "";
-                        const sRaw = row.Siswa || row.siswa || "";
-
-                        const pClean = cleanString(pRaw);
-                        const kClean = cleanString(kRaw);
-                        const sClean = cleanString(sRaw);
-
-                        if (pClean) lastKnownPenguji = pClean;
-                        if (kClean) lastKnownKelas = kClean;
-
-                        return {
-                            penguji: lastKnownPenguji,
-                            kelas: lastKnownKelas,
-                            nama: sClean
-                        };
-                    }).filter(item => item.nama !== "");
-
-                    setDbSiswa(processed);
-                } catch (err) {
-                    setError(err.message);
-                } finally {
-                    setLoading(false);
-                }
-            };
-
-            useEffect(() => { fetchData(); }, []);
-
-            const listPenguji = useMemo(() => {
-                return [...new Set(dbSiswa.map(item => item.penguji))].filter(Boolean).sort();
-            }, [dbSiswa]);
             
-            const listSiswaTersedia = useMemo(() => {
-                return dbSiswa.filter(s => s.penguji === form.penguji);
-            }, [form.penguji, dbSiswa]);
-            
-            const detailSiswaTerpilih = useMemo(() => {
-                return listSiswaTersedia.find(s => s.nama === form.siswa) || null;
-            }, [form.siswa, listSiswaTersedia]);
+        } catch (error) {
+            Swal.fire('Error', 'Gagal memuat DataMaster.csv. Pastikan file ada di folder yang sama.', 'error');
+            document.getElementById('penguji').innerHTML = '<option value="" disabled selected>Data Gagal Dimuat</option>';
+        }
+    }
 
-            const totalNilai = useMemo(() => {
-                const vals = Object.values(form.nilai);
-                const sum = vals.reduce((a, b) => a + b, 0);
-                return sum > 0 ? Math.round(sum / 5) : 0;
-            }, [form.nilai]);
+    // 5. Interaksi Dropdown
+    document.getElementById('penguji').addEventListener('change', function() {
+        const pengujiTerpilih = this.value;
+        const selectSiswa = document.getElementById('siswa');
+        const inputKelas = document.getElementById('kelas');
+        
+        selectSiswa.innerHTML = '<option value="" disabled selected>-- Pilih Siswa --</option>';
+        selectSiswa.disabled = false;
+        inputKelas.value = '';
 
-            const handleSave = async () => {
-                if (!detailSiswaTerpilih) return;
-                setSubmitting(true);
-                const payload = {
-                    tanggal: new Date().toLocaleString('id-ID'),
-                    penguji: form.penguji,
-                    kelas: detailSiswaTerpilih.kelas,
-                    siswa: form.siswa,
-                    ...form.nilai,
-                    total: totalNilai
-                };
+        // Filter daftar anak berdasarkan penguji
+        const dataAnak = dataMaster.filter(item => item.penguji === pengujiTerpilih);
+        
+        dataAnak.forEach(item => {
+            let opt = document.createElement('option');
+            opt.value = item.siswa;
+            opt.textContent = item.siswa;
+            opt.dataset.kelas = item.kelas; 
+            selectSiswa.appendChild(opt);
+        });
+    });
 
-                try {
-                    await fetch(WEB_APP_URL, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        body: JSON.stringify(payload)
-                    });
-                    setStatus({ type: 'success', msg: 'Nilai Berhasil Dikirim!' });
-                    setForm(prev => ({ 
-                        ...prev, 
-                        siswa: '', 
-                        nilai: { laporan: 0, materi: 0, presentasi: 0, tanyaJawab: 0, Sikap: 0 } 
-                    }));
-                    setTimeout(() => setStatus(null), 3000);
-                } catch (err) {
-                    setStatus({ type: 'error', msg: 'Gagal mengirim data.' });
-                } finally {
-                    setSubmitting(false);
-                }
-            };
+    document.getElementById('siswa').addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        document.getElementById('kelas').value = selectedOption.dataset.kelas || '';
+    });
 
-            if (loading) return (
-                <div className="h-screen flex flex-col items-center justify-center bg-emerald-900 text-white p-10 text-center">
-                    <IconRefresh size={54} className="spin-slow text-emerald-300 mb-6" />
-                    <h2 className="font-extrabold text-2xl uppercase italic">SMK IPTEK</h2>
-                    <p className="text-[10px] opacity-60 font-bold tracking-[0.3em]">MENGHUBUNGKAN DATA MASTER...</p>
-                </div>
-            );
+    // 6. Hitung Rata-rata Nilai
+    window.hitungTotal = function() {
+        let total = 0;
+        let jumlahTerisi = 0;
+        aspekPenilaian.forEach(aspek => {
+            const terpilih = document.querySelector(`input[name="${aspek.id}"]:checked`);
+            if (terpilih) {
+                total += parseInt(terpilih.value);
+                jumlahTerisi++;
+            }
+        });
 
-            if (error) return (
-                <div className="h-screen flex flex-col items-center justify-center bg-slate-50 p-10 text-center">
-                    <IconAlert size={48} className="text-red-500 mb-4" />
-                    <p className="text-sm text-slate-600 mb-6 font-bold">{error}</p>
-                    <button onClick={fetchData} className="bg-emerald-600 text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg active:scale-95">Coba Lagi</button>
-                </div>
-            );
+        if (jumlahTerisi === 5) {
+            document.getElementById('totalNilai').innerText = (total / 5).toFixed(0);
+        }
+    };
 
-            return (
-                <div className="max-w-md mx-auto min-h-screen bg-slate-50 flex flex-col border-x border-slate-200 shadow-2xl relative">
-                    <header className="bg-emerald-800 p-6 pt-12 text-white rounded-b-[3rem] shadow-xl relative z-10">
-                        <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-4">
-                                <div className="p-3 bg-white/10 rounded-2xl border border-white/20"><IconGraduation size={28} /></div>
-                                <div>
-                                    <h1 className="text-xl font-black uppercase italic leading-none">SMK IPTEK</h1>
-                                    <p className="text-[9px] font-bold opacity-70 tracking-[0.2em] uppercase mt-1">PENILAIAN SIDANG PKL</p>
-                                </div>
-                            </div>
-                            <button onClick={fetchData} className="p-2.5 bg-white/10 rounded-full active:rotate-180 transition-all"><IconRefresh size={20} /></button>
-                        </div>
-                    </header>
+    // 7. Pengiriman Data ke Spreadsheet via API
+    document.getElementById('formPenilaian').addEventListener('submit', function(e) {
+        e.preventDefault();
 
-                    <main className="flex-1 px-4 py-8 overflow-y-auto custom-scroll pb-40">
-                        {activeTab === 'input' ? (
-                            <div className="space-y-6">
-                                <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 space-y-6">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 flex items-center gap-2"><IconUser size={12} className="text-emerald-600" /> Nama Penguji</label>
-                                        <select className="w-full p-4 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-emerald-500 appearance-none shadow-inner"
-                                            value={form.penguji} onChange={(e) => setForm({...form, penguji: e.target.value, siswa: ''})}>
-                                            <option value="">-- Pilih Penguji --</option>
-                                            {listPenguji.map((p, i) => <option key={i} value={p}>{p}</option>)}
-                                        </select>
-                                    </div>
-                                    {form.penguji && (
-                                        <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 flex items-center gap-2"><IconAward size={12} className="text-emerald-600" /> Peserta Sidang</label>
-                                            <select className="w-full p-4 bg-emerald-50 border-2 border-emerald-100 rounded-2xl text-sm font-black text-emerald-900 appearance-none transition-all"
-                                                value={form.siswa} onChange={(e) => setForm({...form, siswa: e.target.value})}>
-                                                <option value="">-- Pilih Nama Siswa --</option>
-                                                {listSiswaTersedia.map((s, i) => <option key={i} value={s.nama}>{s.nama}</option>)}
-                                            </select>
-                                            {detailSiswaTerpilih && <div className="mt-3 px-4 py-2 bg-emerald-600 text-white text-[10px] font-black rounded-xl inline-flex items-center gap-2 shadow-md"><IconSchool size={12} /> KELAS: {detailSiswaTerpilih.kelas}</div>}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {form.siswa && ASPEK.map((aspek) => (
-                                    <div key={aspek.id} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm animate-in fade-in slide-in-from-bottom-4">
-                                        <div className="mb-4 flex justify-between items-center">
-                                            <div>
-                                                <span className="text-sm font-extrabold text-slate-800 uppercase">{aspek.label}</span>
-                                                <p className="text-[10px] text-slate-400 font-bold italic">{aspek.desc}</p>
-                                            </div>
-                                            {form.nilai[aspek.id] > 0 && <div className="w-9 h-9 bg-emerald-600 rounded-full flex items-center justify-center text-white text-xs font-black shadow-lg">{form.nilai[aspek.id]}</div>}
-                                        </div>
-                                        <div className="grid grid-cols-4 gap-2">
-                                            {SKALA_NILAI.map(n => (
-                                                <button key={n} onClick={() => setForm({ ...form, nilai: { ...form.nilai, [aspek.id]: n } })}
-                                                    className={`py-3 rounded-xl text-[11px] font-black transition-all active:scale-90 ${form.nilai[aspek.id] === n ? 'bg-emerald-600 text-white shadow-md' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}>
-                                                    {n}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="h-96 flex flex-col items-center justify-center text-slate-300">
-                                <IconHistory size={80} className="opacity-10 mb-4" />
-                                <p className="text-xs font-black uppercase tracking-[0.4em]">Rekap Nilai</p>
-                                <p className="text-[10px] mt-2 italic font-bold text-center px-12">Hasil sinkronisasi otomatis ke Google Sheets tab "Hasil".</p>
-                            </div>
-                        )}
-                    </main>
-
-                    {activeTab === 'input' && form.siswa && (
-                        <div className="fixed bottom-24 left-4 right-4 bg-white/80 backdrop-blur-xl p-4 rounded-[2.5rem] shadow-2xl border border-white/50 flex items-center gap-4 z-40">
-                            <div className="bg-slate-900 px-5 py-3 rounded-3xl flex flex-col items-center justify-center min-w-[80px]">
-                                <span className="text-[7px] font-black text-slate-500 uppercase tracking-tighter">SKOR</span>
-                                <span className="text-xl font-black text-white">{totalNilai || '--'}</span>
-                            </div>
-                            <button disabled={submitting || totalNilai === 0} onClick={handleSave}
-                                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-3xl font-black text-xs flex items-center justify-center gap-3 active:scale-95 disabled:opacity-30 shadow-xl uppercase tracking-widest transition-all">
-                                {submitting ? <IconSpinner size={18} /> : "Kirim Penilaian"}
-                            </button>
-                        </div>
-                    )}
-
-                    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 h-20 flex items-center justify-around px-10 pb-2 z-50">
-                        <button onClick={() => setActiveTab('input')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'input' ? 'text-emerald-700 scale-110' : 'text-slate-300'}`}>
-                            <IconDashboard size={20} />
-                            <span className="text-[9px] font-black uppercase tracking-widest">Input</span>
-                        </button>
-                        <button onClick={() => setActiveTab('history')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'history' ? 'text-emerald-700 scale-110' : 'text-slate-300'}`}>
-                            <IconHistory size={20} />
-                            <span className="text-[9px] font-black uppercase tracking-widest">Rekap</span>
-                        </button>
-                    </nav>
-
-                    {status && (
-                        <div className={`fixed top-8 left-4 right-4 p-4 rounded-2xl flex items-center gap-3 shadow-2xl z-[100] animate-bounce text-white ${status.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'}`}>
-                            {status.type === 'success' ? <IconCheck size={20} /> : <IconAlert size={20} />}
-                            <span className="text-xs font-black uppercase tracking-tight">{status.msg}</span>
-                        </div>
-                    )}
-                </div>
-            );
+        const btnSubmit = document.getElementById('btnSubmit');
+        const totalNilai = document.getElementById('totalNilai').innerText;
+        
+        if(totalNilai === '0') {
+            Swal.fire('Belum Lengkap', 'Pastikan semua aspek penilaian telah diisi.', 'warning');
+            return;
         }
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+        // Susun Data sesuai Header di file Hasil.csv
+        const payload = {
+            Tanggal: new Date().toLocaleDateString('id-ID'),
+            Penguji: document.getElementById('penguji').value,
+            Kelas: document.getElementById('kelas').value,
+            Siswa: document.getElementById('siswa').value,
+            Laporan: document.querySelector('input[name="Laporan"]:checked').value,
+            Materi: document.querySelector('input[name="Materi"]:checked').value,
+            Presentasi: document.querySelector('input[name="Presentasi"]:checked').value,
+            TanyaJawab: document.querySelector('input[name="TanyaJawab"]:checked').value,
+            Sikap: document.querySelector('input[name="Sikap"]:checked').value,
+            Total: totalNilai
+        };
+
+        btnSubmit.innerHTML = 'Menyimpan Data...';
+        btnSubmit.disabled = true;
+
+        if (API_URL === "URL_API_SHEETDB_ANDA_DISINI") {
+            Swal.fire({
+                title: 'Data Berhasil Dibuat!',
+                text: 'Namun data BELUM MASUK ke Spreadsheet karena Anda belum memasukkan URL API SheetDB. Silakan ikuti panduan.',
+                icon: 'info'
+            });
+            btnSubmit.innerHTML = 'Simpan Penilaian';
+            btnSubmit.disabled = false;
+            return;
+        }
+
+        // Kirim data menggunakan format SheetDB
+        fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ data: [payload] })
+        })
+        .then(response => response.json())
+        .then(data => {
+            Swal.fire('Berhasil!', 'Nilai sidang berhasil disimpan ke Spreadsheet.', 'success');
+            document.getElementById('formPenilaian').reset();
+            document.getElementById('totalNilai').innerText = '0';
+            document.getElementById('kelas').value = '';
+            document.getElementById('siswa').innerHTML = '<option value="" disabled selected>-- Pilih Siswa --</option>';
+            document.getElementById('siswa').disabled = true;
+        })
+        .catch(error => {
+            Swal.fire('Gagal!', 'Terjadi kesalahan jaringan saat menyimpan data.', 'error');
+            console.error('Error:', error);
+        })
+        .finally(() => {
+            btnSubmit.innerHTML = 'Simpan Penilaian';
+            btnSubmit.disabled = false;
+        });
+    });
+
+    // Jalankan inisialisasi awal
+    initAplikasi();
+</script>
 </body>
 </html>
+
 
